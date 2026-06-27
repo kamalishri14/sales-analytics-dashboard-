@@ -158,14 +158,6 @@ jupyter notebook notebooks/sales_analysis.ipynb
 
 ---
 
-## 🔮 Power BI Setup
-
-1. Open Power BI Desktop → **Get Data → Excel** → select `data/sales_cleaned.xlsx`
-2. Also load `data/rfm_segments.csv`
-3. Create relationship: `Customer ID` between both tables
-4. Copy DAX measures from `dashboard/powerbi_dax_measures.txt`
-5. Build visuals using the measures (see file for full guide)
-6. Publish to Power BI Service → copy share link → add to resume/LinkedIn
 
 ---
 
