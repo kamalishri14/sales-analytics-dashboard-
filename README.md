@@ -81,10 +81,7 @@ sales-analytics-dashboard/
 
 ### 1. Clone & Install
 ```bash
-git clone https://github.com/YOUR-USERNAME/sales-analytics-dashboard.git
-cd sales-analytics-dashboard
-pip install -r requirements.txt
-```
+git clone [https://github.com/kamalishri14/sales-analytics-dashboard-.git](https://github.com/kamalishri14/sales-analytics-dashboard-.git)
 
 ### 2. Generate the Dataset
 ```bash
