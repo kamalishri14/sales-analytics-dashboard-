@@ -1,0 +1,109 @@
+# Power BI DAX Measures Reference
+# Copy these into Power BI Desktop → New Measure
+
+# ─── CORE KPIs ────────────────────────────────────────────────────────────────
+
+Total Revenue =
+    SUM('sales_cleaned'[Sales])
+
+Total Profit =
+    SUM('sales_cleaned'[Profit])
+
+Total Orders =
+    COUNTROWS('sales_cleaned')
+
+Unique Customers =
+    DISTINCTCOUNT('sales_cleaned'[Customer ID])
+
+Avg Order Value =
+    DIVIDE([Total Revenue], [Total Orders])
+
+Profit Margin % =
+    DIVIDE([Total Profit], [Total Revenue]) * 100
+
+Avg Delivery Days =
+    AVERAGE('sales_cleaned'[Delivery Days])
+
+# ─── YEAR-OVER-YEAR ───────────────────────────────────────────────────────────
+
+Revenue LY =
+    CALCULATE([Total Revenue],
+        SAMEPERIODLASTYEAR('sales_cleaned'[Order Date]))
+
+Revenue YoY % =
+    DIVIDE([Total Revenue] - [Revenue LY], [Revenue LY]) * 100
+
+Profit LY =
+    CALCULATE([Total Profit],
+        SAMEPERIODLASTYEAR('sales_cleaned'[Order Date]))
+
+Profit YoY % =
+    DIVIDE([Total Profit] - [Profit LY], [Profit LY]) * 100
+
+# ─── RUNNING TOTALS ───────────────────────────────────────────────────────────
+
+Revenue YTD =
+    TOTALYTD([Total Revenue], 'sales_cleaned'[Order Date])
+
+Profit YTD =
+    TOTALYTD([Total Profit], 'sales_cleaned'[Order Date])
+
+# ─── RANKING ─────────────────────────────────────────────────────────────────
+
+Region Revenue Rank =
+    RANKX(
+        ALLSELECTED('sales_cleaned'[Region]),
+        [Total Revenue],
+        ,
+        DESC,
+        DENSE
+    )
+
+Top Category =
+    CALCULATE(
+        SELECTEDVALUE('sales_cleaned'[Category]),
+        TOPN(1,
+            SUMMARIZE('sales_cleaned', 'sales_cleaned'[Category], "Rev", [Total Revenue]),
+            [Rev],
+            DESC
+        )
+    )
+
+# ─── CUSTOMER METRICS ─────────────────────────────────────────────────────────
+
+Champion Customer Count =
+    CALCULATE(
+        [Unique Customers],
+        'rfm_segments'[Segment] = "Champions"
+    )
+
+Avg Customer Value =
+    DIVIDE([Total Revenue], [Unique Customers])
+
+# ─── DISCOUNT IMPACT ─────────────────────────────────────────────────────────
+
+Avg Discount % =
+    AVERAGE('sales_cleaned'[Discount]) * 100
+
+Revenue Lost to Discount =
+    SUMX(
+        'sales_cleaned',
+        'sales_cleaned'[Unit Price] * 'sales_cleaned'[Quantity] * 'sales_cleaned'[Discount]
+    )
+
+# ─── POWER BI SETUP STEPS ────────────────────────────────────────────────────
+# 1. Open Power BI Desktop
+# 2. Get Data → CSV → load data/sales_cleaned.xlsx (Cleaned Data sheet)
+# 3. Also load data/rfm_segments.csv
+# 4. Create relationship: sales_cleaned[Customer ID] → rfm_segments[Customer ID]
+# 5. Add all measures above via "New Measure"
+# 6. Build visuals:
+#    - Card: Total Revenue, Total Profit, Profit Margin %, Total Orders
+#    - Line chart: Order Date (Month) vs Total Revenue + Revenue LY
+#    - Bar chart: Category vs Total Revenue
+#    - Map: Region vs Total Revenue
+#    - Donut: Segment vs Total Revenue
+#    - Matrix: Region (rows) × Category (columns) = Total Revenue
+#    - Bar: RFM Segment vs Unique Customers (from rfm_segments)
+# 7. Add slicers: Year, Region, Category, Segment
+# 8. Publish to Power BI Service for shareable link

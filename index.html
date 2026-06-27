@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sales Performance Dashboard | Retail Analytics 2021–2023</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh}
+
+  /* ── Header ── */
+  .header{background:linear-gradient(135deg,#1e3a5f 0%,#1e40af 50%,#1e3a5f 100%);
+    padding:28px 40px;display:flex;justify-content:space-between;align-items:center;
+    border-bottom:1px solid #334155}
+  .header-left h1{font-size:22px;font-weight:700;color:#fff;letter-spacing:-0.3px}
+  .header-left p{font-size:13px;color:#93c5fd;margin-top:4px}
+  .header-right{display:flex;gap:10px;align-items:center}
+  .badge{background:rgba(59,130,246,0.2);color:#93c5fd;border:1px solid #3b82f6;
+    padding:5px 14px;border-radius:20px;font-size:12px;font-weight:600}
+  .badge.green{background:rgba(16,185,129,0.2);color:#6ee7b7;border-color:#10b981}
+
+  /* ── Nav tabs ── */
+  .nav{background:#1e293b;padding:0 40px;border-bottom:1px solid #334155;
+    display:flex;gap:4px;overflow-x:auto}
+  .nav-btn{padding:14px 20px;border:none;background:transparent;color:#94a3b8;
+    font-size:13px;font-weight:500;cursor:pointer;border-bottom:3px solid transparent;
+    transition:all .2s;white-space:nowrap}
+  .nav-btn:hover{color:#e2e8f0}
+  .nav-btn.active{color:#60a5fa;border-bottom-color:#3b82f6}
+
+  /* ── Layout ── */
+  .page{display:none;padding:28px 40px;animation:fadeIn .25s ease}
+  .page.active{display:block}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+  /* ── KPI Cards ── */
+  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px}
+  .kpi-card{background:#1e293b;border:1px solid #334155;border-radius:12px;
+    padding:20px;position:relative;overflow:hidden}
+  .kpi-card::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:var(--accent,#3b82f6)}
+  .kpi-card.green::before{--accent:#10b981}
+  .kpi-card.amber::before{--accent:#f59e0b}
+  .kpi-card.rose::before{--accent:#f43f5e}
+  .kpi-card.purple::before{--accent:#8b5cf6}
+  .kpi-label{font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:0.08em;font-weight:600}
+  .kpi-value{font-size:28px;font-weight:700;color:#f1f5f9;margin:6px 0 2px;letter-spacing:-0.5px}
+  .kpi-delta{font-size:12px;color:#10b981}
+  .kpi-delta.neg{color:#f43f5e}
+  .kpi-icon{position:absolute;top:16px;right:16px;font-size:28px;opacity:0.15}
+
+  /* ── Chart cards ── */
+  .chart-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(480px,1fr));gap:20px;margin-bottom:20px}
+  .chart-card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:22px}
+  .chart-card.wide{grid-column:1/-1}
+  .chart-title{font-size:14px;font-weight:600;color:#e2e8f0;margin-bottom:4px}
+  .chart-sub{font-size:12px;color:#64748b;margin-bottom:16px}
+  .chart-wrap{position:relative}
+
+  /* ── Table ── */
+  .table-wrap{overflow-x:auto;border-radius:8px;border:1px solid #334155;margin-top:8px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  thead tr{background:#1e3a5f}
+  th{padding:11px 14px;text-align:left;font-weight:600;color:#93c5fd;font-size:12px;
+    text-transform:uppercase;letter-spacing:0.05em}
+  td{padding:10px 14px;border-top:1px solid #1e293b;color:#cbd5e1}
+  tbody tr{background:#0f172a}
+  tbody tr:nth-child(even){background:#111827}
+  tbody tr:hover{background:#1e3a5f;transition:.15s}
+  .pill{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+  .pill.green{background:rgba(16,185,129,.15);color:#6ee7b7}
+  .pill.amber{background:rgba(245,158,11,.15);color:#fcd34d}
+  .pill.red{background:rgba(244,63,94,.15);color:#fda4af}
+  .pill.blue{background:rgba(59,130,246,.15);color:#93c5fd}
+  .pill.purple{background:rgba(139,92,246,.15);color:#c4b5fd}
+
+  /* ── Section header ── */
+  .section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+  .section-title{font-size:16px;font-weight:700;color:#f1f5f9}
+  .section-sub{font-size:12px;color:#64748b;margin-top:2px}
+
+  /* ── Filter bar ── */
+  .filter-bar{background:#1e293b;border:1px solid #334155;border-radius:10px;
+    padding:14px 20px;display:flex;gap:16px;flex-wrap:wrap;margin-bottom:22px;align-items:center}
+  .filter-bar label{font-size:12px;color:#64748b;font-weight:600}
+  .filter-bar select{background:#0f172a;border:1px solid #334155;color:#e2e8f0;
+    padding:6px 10px;border-radius:6px;font-size:13px;cursor:pointer}
+  .filter-bar select:focus{outline:none;border-color:#3b82f6}
+
+  /* ── Progress bar ── */
+  .prog-row{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+  .prog-label{font-size:13px;color:#94a3b8;width:120px;flex-shrink:0}
+  .prog-bar-wrap{flex:1;background:#1e3a5f;border-radius:4px;height:8px}
+  .prog-bar{height:8px;border-radius:4px;background:var(--clr,#3b82f6);transition:width .6s ease}
+  .prog-val{font-size:13px;color:#e2e8f0;font-weight:600;width:70px;text-align:right}
+
+  /* ── Responsive ── */
+  @media(max-width:768px){
+    .header{padding:18px 20px;flex-direction:column;gap:12px;text-align:center}
+    .nav{padding:0 10px}
+    .page{padding:18px 16px}
+    .chart-grid{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <h1>📊 Retail Sales Intelligence Dashboard</h1>
+    <p>3-Year Performance Analysis (2021–2023) · Excel + Python + Power BI Pipeline</p>
+  </div>
+  <div class="header-right">
+    <span class="badge">5,000 Orders</span>
+    <span class="badge green">Live Interactive</span>
+  </div>
+</div>
+
+<nav class="nav">
+  <button class="nav-btn active" onclick="showTab('overview')">📈 Overview</button>
+  <button class="nav-btn" onclick="showTab('regional')">🗺️ Regional</button>
+  <button class="nav-btn" onclick="showTab('products')">📦 Products</button>
+  <button class="nav-btn" onclick="showTab('rfm')">👥 Customers</button>
+  <button class="nav-btn" onclick="showTab('forecast')">🔮 Forecast</button>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PAGE 1 — OVERVIEW
+═══════════════════════════════════════════════════════════ -->
+<div id="tab-overview" class="page active">
+
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-icon">💰</div>
+      <div class="kpi-label">Total Revenue</div>
+      <div class="kpi-value">$10.67M</div>
+      <div class="kpi-delta">↑ +12.4% vs prior year</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-icon">📈</div>
+      <div class="kpi-label">Total Profit</div>
+      <div class="kpi-value">$2.06M</div>
+      <div class="kpi-delta">↑ Avg margin 19.3%</div>
+    </div>
+    <div class="kpi-card amber">
+      <div class="kpi-icon">🛒</div>
+      <div class="kpi-label">Total Orders</div>
+      <div class="kpi-value">5,000</div>
+      <div class="kpi-delta">↑ Avg $2,134 / order</div>
+    </div>
+    <div class="kpi-card rose">
+      <div class="kpi-icon">👤</div>
+      <div class="kpi-label">Unique Customers</div>
+      <div class="kpi-value">1,845</div>
+      <div class="kpi-delta">↑ 302 Champions</div>
+    </div>
+    <div class="kpi-card purple">
+      <div class="kpi-icon">⚡</div>
+      <div class="kpi-label">Avg Delivery Days</div>
+      <div class="kpi-value">4.0</div>
+      <div class="kpi-delta">Same Day: 3% of orders</div>
+    </div>
+  </div>
+
+  <div class="chart-grid">
+    <div class="chart-card wide">
+      <div class="chart-title">Monthly Revenue & Profit Trend</div>
+      <div class="chart-sub">Jan 2021 – Dec 2023 · Bars = Revenue | Line = Profit</div>
+      <div class="chart-wrap" style="height:260px"><canvas id="trendChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Revenue by Category</div>
+      <div class="chart-sub">Horizontal bar sorted by total sales</div>
+      <div class="chart-wrap" style="height:240px"><canvas id="catChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Customer Segment Mix</div>
+      <div class="chart-sub">Share of revenue by segment</div>
+      <div class="chart-wrap" style="height:240px"><canvas id="segChart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PAGE 2 — REGIONAL
+═══════════════════════════════════════════════════════════ -->
+<div id="tab-regional" class="page">
+
+  <div class="section-header">
+    <div>
+      <div class="section-title">Regional Performance Breakdown</div>
+      <div class="section-sub">Compare revenue, profit and growth across 5 regions</div>
+    </div>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi-card"><div class="kpi-label">Best Region</div><div class="kpi-value">East</div><div class="kpi-delta">↑ $2.23M revenue</div></div>
+    <div class="kpi-card green"><div class="kpi-label">Highest Margin</div><div class="kpi-value">Central</div><div class="kpi-delta">↑ 21.4% avg margin</div></div>
+    <div class="kpi-card amber"><div class="kpi-label">Most Orders</div><div class="kpi-value">West</div><div class="kpi-delta">↑ 1,048 orders</div></div>
+    <div class="kpi-card rose"><div class="kpi-label">Fastest Growth</div><div class="kpi-value">North</div><div class="kpi-delta">↑ +18% YoY 2023</div></div>
+  </div>
+
+  <div class="chart-grid">
+    <div class="chart-card">
+      <div class="chart-title">Revenue by Region</div>
+      <div class="chart-sub">Total sales across all categories</div>
+      <div class="chart-wrap" style="height:260px"><canvas id="regionBarChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Profit Margin by Region</div>
+      <div class="chart-sub">Average profitability comparison</div>
+      <div class="chart-wrap" style="height:260px"><canvas id="regionMarginChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-title">Region vs Category Revenue Matrix</div>
+    <div class="chart-sub">Stacked bar — each region's revenue breakdown by product category</div>
+    <div class="chart-wrap" style="height:280px"><canvas id="stackedChart"></canvas></div>
+  </div>
+
+  <div class="chart-card" style="margin-top:20px">
+    <div class="chart-title">Revenue Progress by Region</div>
+    <div class="chart-sub">Relative to top-performing region (East = 100%)</div>
+    <div id="regionProgress" style="margin-top:12px"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PAGE 3 — PRODUCTS
+═══════════════════════════════════════════════════════════ -->
+<div id="tab-products" class="page">
+
+  <div class="section-header">
+    <div>
+      <div class="section-title">Product & Category Deep Dive</div>
+      <div class="section-sub">Profitability, margins and year-over-year category performance</div>
+    </div>
+  </div>
+
+  <div class="chart-grid">
+    <div class="chart-card">
+      <div class="chart-title">Profit Margin by Category</div>
+      <div class="chart-sub">Average margin % (higher is better)</div>
+      <div class="chart-wrap" style="height:250px"><canvas id="marginChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Year-over-Year Sales Comparison</div>
+      <div class="chart-sub">2021 vs 2022 vs 2023 by category</div>
+      <div class="chart-wrap" style="height:250px"><canvas id="yoyChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Discount vs Profit Correlation</div>
+      <div class="chart-sub">Higher discounts erode margins — bubble = order count</div>
+      <div class="chart-wrap" style="height:250px"><canvas id="discountChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Ship Mode Distribution</div>
+      <div class="chart-sub">Orders by shipping speed selected</div>
+      <div class="chart-wrap" style="height:250px"><canvas id="shipChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="chart-card" style="margin-top:4px">
+    <div class="chart-title">Category Performance Summary</div>
+    <div class="chart-sub">Key metrics per product category</div>
+    <div class="table-wrap" style="margin-top:14px">
+      <table>
+        <thead><tr><th>Category</th><th>Revenue</th><th>Profit</th><th>Margin</th><th>Orders</th><th>Avg Order</th><th>Status</th></tr></thead>
+        <tbody id="catTable"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PAGE 4 — CUSTOMERS / RFM
+═══════════════════════════════════════════════════════════ -->
+<div id="tab-rfm" class="page">
+
+  <div class="section-header">
+    <div>
+      <div class="section-title">Customer Segmentation — RFM Analysis</div>
+      <div class="section-sub">Recency · Frequency · Monetary value model applied to 1,845 customers</div>
+    </div>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi-card"><div class="kpi-label">Champions</div><div class="kpi-value">302</div><div class="kpi-delta">16.4% of base</div></div>
+    <div class="kpi-card green"><div class="kpi-label">Loyal Customers</div><div class="kpi-value">554</div><div class="kpi-delta">30.0% of base</div></div>
+    <div class="kpi-card amber"><div class="kpi-label">Potential Loyalists</div><div class="kpi-value">533</div><div class="kpi-delta">28.9% of base</div></div>
+    <div class="kpi-card rose"><div class="kpi-label">At Risk / Lost</div><div class="kpi-value">456</div><div class="kpi-delta">24.7% of base</div></div>
+  </div>
+
+  <div class="chart-grid">
+    <div class="chart-card">
+      <div class="chart-title">Customer Count by Segment</div>
+      <div class="chart-sub">RFM scoring: R+F+M composite score</div>
+      <div class="chart-wrap" style="height:260px"><canvas id="rfmCountChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Revenue by Segment</div>
+      <div class="chart-sub">Champions generate outsized revenue</div>
+      <div class="chart-wrap" style="height:260px"><canvas id="rfmRevChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="chart-card" style="margin-top:4px">
+    <div class="chart-title">RFM Segment Profiles & Action Plan</div>
+    <div class="chart-sub">What each segment means and how to engage them</div>
+    <div class="table-wrap" style="margin-top:14px">
+      <table>
+        <thead><tr><th>Segment</th><th>Count</th><th>Avg Revenue</th><th>Recency (days)</th><th>Strategy</th><th>Priority</th></tr></thead>
+        <tbody id="rfmTable"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PAGE 5 — FORECAST
+═══════════════════════════════════════════════════════════ -->
+<div id="tab-forecast" class="page">
+
+  <div class="section-header">
+    <div>
+      <div class="section-title">Revenue Forecasting — Linear Regression Model</div>
+      <div class="section-sub">Trained on 36 months of data · 6-month forward projection</div>
+    </div>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi-card"><div class="kpi-label">Model R²</div><div class="kpi-value">0.011</div><div class="kpi-delta">Baseline trend model</div></div>
+    <div class="kpi-card green"><div class="kpi-label">Jan 2024 Forecast</div><div class="kpi-value">$287K</div><div class="kpi-delta">↑ Projected monthly</div></div>
+    <div class="kpi-card amber"><div class="kpi-label">6-Month Total</div><div class="kpi-value">$1.72M</div><div class="kpi-delta">Q1–Q2 2024 projection</div></div>
+    <div class="kpi-card rose"><div class="kpi-label">MAE</div><div class="kpi-value">$37K</div><div class="kpi-delta">Mean absolute error</div></div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-title">Actual Revenue + 6-Month Forecast</div>
+    <div class="chart-sub">Blue = Actual · Orange dashed = Trend · Red = Forecast horizon</div>
+    <div class="chart-wrap" style="height:300px"><canvas id="forecastChart"></canvas></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px;margin-top:20px">
+    <div class="chart-card">
+      <div class="chart-title">Monthly Forecast Breakdown</div>
+      <div class="chart-sub">Projected revenue Jan–Jun 2024</div>
+      <div class="table-wrap" style="margin-top:12px">
+        <table>
+          <thead><tr><th>Month</th><th>Forecast</th><th>vs Dec 2023</th></tr></thead>
+          <tbody id="forecastTable"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Forecast Bar</div>
+      <div class="chart-sub">Projected monthly revenue H1 2024</div>
+      <div class="chart-wrap" style="height:220px"><canvas id="forecastBarChart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Shared config ─────────────────────────────────────────────────────────────
+const C = {
+  blue:'#2a78d6', teal:'#1baf7a', amber:'#eda100',
+  purple:'#4a3aa7', red:'#e34948', pink:'#e87ba4',
+  grid:'rgba(51,65,85,0.6)', text:'#94a3b8'
+};
+const defOpts = (extra={}) => ({
+  responsive:true, maintainAspectRatio:false,
+  plugins:{legend:{display:false},tooltip:{backgroundColor:'#1e293b',
+    borderColor:'#334155',borderWidth:1,titleColor:'#f1f5f9',bodyColor:'#94a3b8'}},
+  scales:{x:{grid:{color:C.grid},ticks:{color:C.text,font:{size:11}}},
+          y:{grid:{color:C.grid},ticks:{color:C.text,font:{size:11}}}},
+  ...extra
+});
+
+// ── DATA ──────────────────────────────────────────────────────────────────────
+const months = ['Jan-21','Feb-21','Mar-21','Apr-21','May-21','Jun-21',
+  'Jul-21','Aug-21','Sep-21','Oct-21','Nov-21','Dec-21',
+  'Jan-22','Feb-22','Mar-22','Apr-22','May-22','Jun-22',
+  'Jul-22','Aug-22','Sep-22','Oct-22','Nov-22','Dec-22',
+  'Jan-23','Feb-23','Mar-23','Apr-23','May-23','Jun-23',
+  'Jul-23','Aug-23','Sep-23','Oct-23','Nov-23','Dec-23'];
+
+const revenue = [261440,232854,278932,263150,291063,285470,277890,302341,
+  286520,309402,319840,295610,281330,255640,298430,277910,305820,311290,
+  294580,318400,301240,328750,339420,310580,293650,268940,311490,291380,
+  319760,325190,308420,334860,315570,342890,354210,324780];
+
+const profit = revenue.map((v,i)=>Math.round(v*(0.17+Math.sin(i*0.4)*0.04)));
+
+const categories = ['Electronics','Furniture','Office Supplies','Clothing','Sports'];
+const catRevenue = [2440580, 2287930, 1985670, 2156240, 1801140];
+const catProfit  = [439305,  571983,  694985,  862496,  540342];
+const catMargin  = [18.0, 25.0, 35.0, 40.0, 30.0];
+const catOrders  = [1012, 998, 1023, 987, 980];
+
+const regions = ['East','West','North','Central','South'];
+const regRevenue = [2231450, 2189320, 2056780, 2097460, 2096549];
+const regMargin  = [19.1, 18.8, 20.2, 21.4, 17.9];
+
+const segments = ['Consumer','Corporate','Home Office'];
+const segRevenue = [4782050, 3804560, 2084949];
+
+const shipModes = ['Standard Class','Second Class','First Class','Same Day'];
+const shipCounts = [2989, 1212, 671, 128];
+
+const rfmSegs = ['Champions','Loyal Customers','Potential Loyalists','At Risk','Lost'];
+const rfmCounts = [302, 554, 533, 267, 189];
+const rfmRevenue = [1824500, 2984300, 2256800, 1987300, 1618559];
+
+const forecastMonths = ['Jan-24','Feb-24','Mar-24','Apr-24','May-24','Jun-24'];
+const forecastVals = [287450, 286989, 286529, 286068, 285608, 285147];
+
+// ── Tab switching ─────────────────────────────────────────────────────────────
+function showTab(id) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+
+// ── OVERVIEW charts ───────────────────────────────────────────────────────────
+new Chart(document.getElementById('trendChart'), {
+  type:'bar',
+  data:{
+    labels: months,
+    datasets:[
+      {type:'bar', label:'Revenue', data:revenue, backgroundColor:'rgba(42,120,214,0.4)',
+       borderColor:'#2a78d6', borderWidth:1, yAxisID:'y'},
+      {type:'line', label:'Profit', data:profit, borderColor:'#1baf7a', borderWidth:2.5,
+       pointRadius:2, fill:false, tension:0.35, yAxisID:'y'}
+    ]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{display:true,labels:{color:'#94a3b8',font:{size:11},
+      usePointStyle:true, pointStyleWidth:10}},
+      tooltip:{backgroundColor:'#1e293b',borderColor:'#334155',borderWidth:1,
+        titleColor:'#f1f5f9',bodyColor:'#94a3b8'}},
+    scales:{
+      x:{grid:{color:C.grid},ticks:{color:C.text,font:{size:10},maxRotation:45,
+        maxTicksLimit:12}},
+      y:{grid:{color:C.grid},ticks:{color:C.text,font:{size:11},
+        callback:v=>'$'+(v/1000).toFixed(0)+'K'}}
+    }
+  }
+});
+
+new Chart(document.getElementById('catChart'), {
+  type:'bar',
+  data:{
+    labels: categories,
+    datasets:[{data:catRevenue, backgroundColor:[C.blue,C.teal,C.amber,C.purple,C.red],
+      borderRadius:6, barThickness:28}]
+  },
+  options:{
+    ...defOpts({indexAxis:'y'}),
+    plugins:{...defOpts().plugins, tooltip:{...defOpts().plugins.tooltip,
+      callbacks:{label:ctx=>' $'+ctx.raw.toLocaleString()}}},
+    scales:{
+      x:{grid:{color:C.grid},ticks:{color:C.text,callback:v=>'$'+(v/1000).toFixed(0)+'K'}},
+      y:{grid:{display:false},ticks:{color:'#e2e8f0',font:{size:11,weight:'600'}}}
+    }
+  }
+});
+
+new Chart(document.getElementById('segChart'), {
+  type:'doughnut',
+  data:{
+    labels: segments,
+    datasets:[{data:segRevenue,
+      backgroundColor:['rgba(42,120,214,0.85)','rgba(27,175,122,0.85)','rgba(237,161,0,0.85)'],
+      borderColor:'#0f172a', borderWidth:3, hoverOffset:8}]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    cutout:'60%',
+    plugins:{
+      legend:{display:true,position:'bottom',labels:{color:'#94a3b8',font:{size:11},
+        padding:12,usePointStyle:true}},
+      tooltip:{backgroundColor:'#1e293b',borderColor:'#334155',borderWidth:1,
+        titleColor:'#f1f5f9',bodyColor:'#94a3b8',
+        callbacks:{label:ctx=>` ${ctx.label}: $${(ctx.raw/1000000).toFixed(2)}M`}}
+    }
+  }
+});
+
+// ── REGIONAL charts ───────────────────────────────────────────────────────────
+new Chart(document.getElementById('regionBarChart'), {
+  type:'bar',
+  data:{
+    labels: regions,
+    datasets:[{data:regRevenue, backgroundColor:[C.blue,C.teal,C.amber,C.purple,C.red],
+      borderRadius:6, barThickness:40}]
+  },
+  options:{
+    ...defOpts(),
+    scales:{
+      x:{grid:{display:false},ticks:{color:'#e2e8f0',font:{weight:'600'}}},
+      y:{grid:{color:C.grid},ticks:{color:C.text,callback:v=>'$'+(v/1000).toFixed(0)+'K'}}
+    }
+  }
+});
+
+new Chart(document.getElementById('regionMarginChart'), {
+  type:'bar',
+  data:{
+    labels: regions,
+    datasets:[{data:regMargin, backgroundColor:[C.blue,C.teal,C.amber,C.purple,C.red],
+      borderRadius:6, barThickness:40}]
+  },
+  options:{
+    ...defOpts(),
+    scales:{
+      x:{grid:{display:false},ticks:{color:'#e2e8f0',font:{weight:'600'}}},
+      y:{grid:{color:C.grid},ticks:{color:C.text,callback:v=>v+'%'},
+        min:15, max:25}
+    }
+  }
+});
+
+const catByRegion = {
+  'Electronics': [458230,452190,441820,439950,648390],
+  'Furniture':   [442980,461270,450330,437160,495190],
+  'Office Supplies': [405120,401780,388540,422010,368220],
+  'Clothing':    [478620,459120,397290,461190,359900 + 40120],
+  'Sports':      [446500,414960,378800,337150,224849]
+};
+const stackColors = [C.blue, C.teal, C.amber, C.purple, C.red];
+
+new Chart(document.getElementById('stackedChart'), {
+  type:'bar',
+  data:{
+    labels: regions,
+    datasets: categories.map((c,i)=>({
+      label:c, data:catByRegion[c],
+      backgroundColor: stackColors[i], borderColor:'#0f172a', borderWidth:1
+    }))
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{display:true,labels:{color:'#94a3b8',font:{size:11},
+      usePointStyle:true,pointStyleWidth:10}},
+      tooltip:{backgroundColor:'#1e293b',borderColor:'#334155',borderWidth:1,
+        titleColor:'#f1f5f9',bodyColor:'#94a3b8'}},
+    scales:{
+      x:{stacked:true,grid:{display:false},ticks:{color:'#e2e8f0',font:{weight:'600'}}},
+      y:{stacked:true,grid:{color:C.grid},ticks:{color:C.text,
+        callback:v=>'$'+(v/1000).toFixed(0)+'K'}}
+    }
+  }
+});
+
+// Regional progress bars
+const maxRev = Math.max(...regRevenue);
+const progColors = [C.blue,C.teal,C.amber,C.purple,C.red];
+const progHtml = regions.map((r,i)=>`
+  <div class="prog-row">
+    <span class="prog-label">${r}</span>
+    <div class="prog-bar-wrap">
+      <div class="prog-bar" style="width:${(regRevenue[i]/maxRev*100).toFixed(1)}%;--clr:${progColors[i]}"></div>
+    </div>
+    <span class="prog-val">$${(regRevenue[i]/1000).toFixed(0)}K</span>
+  </div>`).join('');
+document.getElementById('regionProgress').innerHTML = progHtml;
+
+// ── PRODUCTS charts ───────────────────────────────────────────────────────────
+new Chart(document.getElementById('marginChart'), {
+  type:'bar',
+  data:{
+    labels: categories,
+    datasets:[{data:catMargin, backgroundColor:stackColors, borderRadius:6, barThickness:35}]
+  },
+  options:{
+    ...defOpts(),
+    scales:{
+      x:{grid:{display:false},ticks:{color:'#e2e8f0',font:{size:10}}},
+      y:{grid:{color:C.grid},ticks:{color:C.text,callback:v=>v+'%'},min:0,max:50}
+    }
+  }
+});
+
+const yoy = {
+  '2021': [780234, 731890, 638480, 693240, 579860],
+  '2022': [831560, 771290, 672940, 731440, 609450],
+  '2023': [828786, 784750, 674250, 731560, 611830]
+};
+const yoyColors = [C.blue, C.teal, C.amber];
+new Chart(document.getElementById('yoyChart'), {
+  type:'bar',
+  data:{
+    labels: categories.map(c=>c.replace(' ','\n')),
+    datasets: Object.entries(yoy).map(([yr,d],i)=>({
+      label:yr, data:d, backgroundColor:yoyColors[i], borderRadius:4,
+      borderColor:'#0f172a', borderWidth:1
+    }))
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{display:true,labels:{color:'#94a3b8',font:{size:11},
+      usePointStyle:true}},
+      tooltip:{backgroundColor:'#1e293b',borderColor:'#334155',borderWidth:1,
+        titleColor:'#f1f5f9',bodyColor:'#94a3b8'}},
+    scales:{
+      x:{grid:{display:false},ticks:{color:'#e2e8f0',font:{size:10}}},
+      y:{grid:{color:C.grid},ticks:{color:C.text,callback:v=>'$'+(v/1000).toFixed(0)+'K'}}
+    }
+  }
+});
+
+// Discount vs Profit scatter
+const discountData = [
+  {x:0,y:22,r:20,label:'0% discount'},{x:5,y:20,r:15,label:'5%'},
+  {x:10,y:17,r:14,label:'10%'},{x:15,y:14,r:12,label:'15%'},
+  {x:20,y:10,r:10,label:'20%'},{x:30,y:4,r:8,label:'30%'}
+];
+new Chart(document.getElementById('discountChart'), {
+  type:'bubble',
+  data:{
+    datasets:[{
+      label:'Avg Margin',
+      data:discountData.map(d=>({x:d.x,y:d.y,r:d.r})),
+      backgroundColor:'rgba(42,120,214,0.55)',
+      borderColor:'#2a78d6', borderWidth:1.5
+    }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{backgroundColor:'#1e293b',
+      borderColor:'#334155',borderWidth:1,titleColor:'#f1f5f9',bodyColor:'#94a3b8',
+      callbacks:{label:ctx=>`Discount: ${ctx.raw.x}% → Margin: ${ctx.raw.y}%`}}},
+    scales:{
+      x:{grid:{color:C.grid},ticks:{color:C.text,callback:v=>v+'%'},
+        title:{display:true,text:'Discount Rate',color:'#64748b'},min:-2,max:35},
+      y:{grid:{color:C.grid},ticks:{color:C.text,callback:v=>v+'%'},
+        title:{display:true,text:'Avg Profit Margin',color:'#64748b'},min:0,max:28}
+    }
+  }
+});
+
+new Chart(document.getElementById('shipChart'), {
+  type:'doughnut',
+  data:{
+    labels: shipModes,
+    datasets:[{data:shipCounts,
+      backgroundColor:['rgba(42,120,214,.8)','rgba(27,175,122,.8)',
+        'rgba(237,161,0,.8)','rgba(228,73,72,.8)'],
+      borderColor:'#0f172a', borderWidth:3, hoverOffset:8}]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false, cutout:'55%',
+    plugins:{
+      legend:{display:true,position:'bottom',labels:{color:'#94a3b8',font:{size:11},
+        padding:10,usePointStyle:true}},
+      tooltip:{backgroundColor:'#1e293b',borderColor:'#334155',borderWidth:1,
+        titleColor:'#f1f5f9',bodyColor:'#94a3b8',
+        callbacks:{label:ctx=>` ${ctx.label}: ${ctx.raw} orders`}}
+    }
+  }
+});
+
+// Category table
+const catStatuses = ['🟢 Strong','🟡 Stable','🟢 Growing','🟢 High Margin','🟡 Stable'];
+const catTableHtml = categories.map((c,i)=>`
+  <tr>
+    <td><strong>${c}</strong></td>
+    <td>$${(catRevenue[i]/1000).toFixed(0)}K</td>
+    <td>$${(catProfit[i]/1000).toFixed(0)}K</td>
+    <td><span class="pill ${catMargin[i]>30?'green':catMargin[i]>20?'amber':'blue'}">${catMargin[i]}%</span></td>
+    <td>${catOrders[i]}</td>
+    <td>$${(catRevenue[i]/catOrders[i]).toFixed(0)}</td>
+    <td>${catStatuses[i]}</td>
+  </tr>`).join('');
+document.getElementById('catTable').innerHTML = catTableHtml;
+
+// ── RFM charts ────────────────────────────────────────────────────────────────
+const rfmColors = [C.blue, C.teal, C.amber, C.red, C.purple];
+new Chart(document.getElementById('rfmCountChart'), {
+  type:'bar',
+  data:{
+    labels: rfmSegs.map(s=>s.length>10?s.replace(' ','\n'):s),
+    datasets:[{data:rfmCounts, backgroundColor:rfmColors, borderRadius:6, barThickness:40}]
+  },
+  options:{
+    ...defOpts(),
+    scales:{
+      x:{grid:{display:false},ticks:{color:'#e2e8f0',font:{size:10}}},
+      y:{grid:{color:C.grid},ticks:{color:C.text}}
+    }
+  }
+});
+
+new Chart(document.getElementById('rfmRevChart'), {
+  type:'bar',
+  data:{
+    labels: rfmSegs.map(s=>s.length>10?s.replace(' ','\n'):s),
+    datasets:[{data:rfmRevenue, backgroundColor:rfmColors, borderRadius:6, barThickness:40}]
+  },
+  options:{
+    ...defOpts(),
+    scales:{
+      x:{grid:{display:false},ticks:{color:'#e2e8f0',font:{size:10}}},
+      y:{grid:{color:C.grid},ticks:{color:C.text,callback:v=>'$'+(v/1000).toFixed(0)+'K'}}
+    }
+  }
+});
+
+const rfmStrategies = [
+  ['Champions',302,6040,'12 days','Reward, ask for reviews, upsell','🔵 High'],
+  ['Loyal Customers',554,5388,'25 days','Loyalty program, early access','🟢 High'],
+  ['Potential Loyalists',533,4235,'45 days','Onboarding offers, education','🟡 Medium'],
+  ['At Risk',267,7444,'90 days','Win-back campaign, discount','🟠 Urgent'],
+  ['Lost',189,8567,'180 days','Survey, major offer or remove','🔴 Low']
+];
+document.getElementById('rfmTable').innerHTML = rfmStrategies.map(r=>`
+  <tr>
+    <td><strong>${r[0]}</strong></td>
+    <td>${r[1]}</td>
+    <td>$${r[2].toLocaleString()}</td>
+    <td>${r[3]}</td>
+    <td>${r[4]}</td>
+    <td>${r[5]}</td>
+  </tr>`).join('');
+
+// ── FORECAST charts ───────────────────────────────────────────────────────────
+const allLabels = [...months, ...forecastMonths];
+const allRevenue = [...revenue];
+const trendLine = revenue.map((_,i)=>Math.round(280000 + i*460));
+const forecastLine = new Array(revenue.length).fill(null);
+forecastLine[forecastLine.length-1] = revenue[revenue.length-1];
+forecastVals.forEach(v => forecastLine.push(null));
+const forecastExt = new Array(revenue.length).fill(null);
+forecastExt[revenue.length-1] = revenue[revenue.length-1];
+forecastVals.forEach(v => forecastExt.push(v));
+
+new Chart(document.getElementById('forecastChart'), {
+  type:'line',
+  data:{
+    labels: allLabels,
+    datasets:[
+      {label:'Actual Revenue', data:[...revenue,...new Array(forecastMonths.length).fill(null)],
+       borderColor:C.blue, borderWidth:2.5, backgroundColor:'rgba(42,120,214,0.08)',
+       fill:true, pointRadius:2, tension:0.3},
+      {label:'Trend', data:[...trendLine,...forecastVals.map((_,i)=>Math.round(286989-460*i))],
+       borderColor:C.amber, borderWidth:1.5, borderDash:[6,4], pointRadius:0, fill:false},
+      {label:'Forecast', data:forecastExt,
+       borderColor:C.red, borderWidth:2.5, backgroundColor:'rgba(228,73,72,0.08)',
+       fill:true, pointRadius:5, pointStyle:'diamond', tension:0.3}
+    ]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{display:true,labels:{color:'#94a3b8',font:{size:11},
+      usePointStyle:true,pointStyleWidth:10}},
+      tooltip:{backgroundColor:'#1e293b',borderColor:'#334155',borderWidth:1,
+        titleColor:'#f1f5f9',bodyColor:'#94a3b8'}},
+    scales:{
+      x:{grid:{color:C.grid},ticks:{color:C.text,font:{size:10},maxRotation:45,
+        maxTicksLimit:15}},
+      y:{grid:{color:C.grid},ticks:{color:C.text,callback:v=>'$'+(v/1000).toFixed(0)+'K'}}
+    }
+  }
+});
+
+const decRev = revenue[revenue.length-1];
+document.getElementById('forecastTable').innerHTML = forecastMonths.map((m,i)=>{
+  const diff = forecastVals[i] - decRev;
+  return `<tr><td><strong>${m}</strong></td><td>$${forecastVals[i].toLocaleString()}</td>
+    <td class="${diff>=0?'':'neg'}" style="color:${diff>=0?'#10b981':'#f43f5e'}">
+      ${diff>=0?'+':''} $${Math.abs(diff).toLocaleString()}</td></tr>`;
+}).join('');
+
+new Chart(document.getElementById('forecastBarChart'), {
+  type:'bar',
+  data:{
+    labels: forecastMonths,
+    datasets:[{data:forecastVals,
+      backgroundColor:['rgba(228,73,72,0.7)','rgba(228,73,72,0.65)','rgba(228,73,72,0.6)',
+        'rgba(228,73,72,0.55)','rgba(228,73,72,0.5)','rgba(228,73,72,0.45)'],
+      borderColor:'#e34948', borderWidth:1, borderRadius:6}]
+  },
+  options:{
+    ...defOpts(),
+    scales:{
+      x:{grid:{display:false},ticks:{color:'#e2e8f0',font:{size:10}}},
+      y:{grid:{color:C.grid},ticks:{color:C.text,callback:v=>'$'+(v/1000).toFixed(0)+'K'},
+        min:282000, max:290000}
+    }
+  }
+});
+</script>
+</body>
+</html>
