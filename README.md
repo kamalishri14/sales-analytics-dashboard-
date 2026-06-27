@@ -169,10 +169,3 @@ jupyter notebook notebooks/sales_analysis.ipynb
 
 ---
 
-## 📬 Contact
-
-**Your Name** · [LinkedIn](https://linkedin.com/in/yourprofile) · [Portfolio](https://yourportfolio.com)
-
----
-
-*Built as a portfolio project demonstrating end-to-end data analytics skills.*
