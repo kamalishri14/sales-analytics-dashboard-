@@ -3,7 +3,7 @@
 > **End-to-end data analytics project** using **Excel → Python → Power BI** pipeline.  
 > 3 years of retail data · 5,000 orders · 1,845 customers · 5 regions · 5 categories
 
-[![Live Dashboard](https://img.shields.io/badge/Live%20Dashboard-View%20Here-2a78d6?style=for-the-badge)](https://YOUR-USERNAME.github.io/sales-analytics-dashboard/)
+[![Live Dashboard](https://img.shields.io/badge/Live%20Dashboard-View%20Here-2a78d6?style=for-the-badge)](https://kamalishri14.github.io/sales-analytics-dashboard-/)
 [![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=flat&logo=python&logoColor=white)](https://python.org)
 [![Excel](https://img.shields.io/badge/Excel-Power%20Query-217346?style=flat&logo=microsoft-excel&logoColor=white)](https://microsoft.com/excel)
 [![Power BI](https://img.shields.io/badge/Power%20BI-DAX%20Measures-F2C811?style=flat&logo=power-bi&logoColor=black)](https://powerbi.microsoft.com)
