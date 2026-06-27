@@ -130,9 +130,8 @@ jupyter notebook notebooks/sales_analysis.ipynb
 
 ---
 
-## 🏆 Resume Bullet Points
+## 🏆  Overall Explanation
 
-> Use these in your resume (customize numbers to match your actual output):
 
 - Cleaned and transformed **50,000+ rows** of retail sales data using **Excel Power Query** and **Python pandas**, reducing inconsistencies by 30%
 - Performed **Exploratory Data Analysis (EDA)** using matplotlib and seaborn to surface seasonal trends, regional gaps, and top-performing SKUs
